@@ -50,10 +50,8 @@ public class RecipeListPanel extends JPanel {
         JPanel buttonRow = new JPanel();
         searchButton = new JButton("Search");
         resetButton = new JButton("Reset");
-        newRecipeButton = new JButton("New Recipe");
         buttonRow.add(searchButton);
         buttonRow.add(resetButton);
-        buttonRow.add(newRecipeButton);
         searchPanel.add(Box.createVerticalStrut(8));
         searchPanel.add(buttonRow);
 
@@ -61,8 +59,22 @@ public class RecipeListPanel extends JPanel {
         recipeJList = new JList<>(listModel);
         recipeJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        add(searchPanel, BorderLayout.NORTH);
-        add(new JScrollPane(recipeJList), BorderLayout.CENTER);
+        JPanel newRecipePanel = new JPanel(new BorderLayout(6, 6));
+        newRecipePanel.setBorder(BorderFactory.createTitledBorder("Start a new recipe"));
+        newRecipeButton = new JButton("New Recipe");
+        JLabel newRecipeHint = new JLabel("Create a brand new recipe instead of editing a selection.");
+        newRecipePanel.add(newRecipeHint, BorderLayout.CENTER);
+        newRecipePanel.add(newRecipeButton, BorderLayout.EAST);
+
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.add(searchPanel);
+        header.add(Box.createVerticalStrut(8));
+        header.add(newRecipePanel);
+
+        add(header, BorderLayout.NORTH);
+        add(buildListSection(), BorderLayout.CENTER);
+        attachFilterListeners();
     }
 
     private JPanel labeledField(String label, JTextField field) {
@@ -139,6 +151,7 @@ public class RecipeListPanel extends JPanel {
         nameField.setText("");
         tagsField.setText("");
         ingredientsField.setText("");
+        updateFilterButtons();
     }
 
     public void selectRecipeById(ObjectId id) {
@@ -153,5 +166,30 @@ public class RecipeListPanel extends JPanel {
                 break;
             }
         }
+    }
+
+    private JPanel buildListSection() {
+        JPanel panel = new JPanel(new BorderLayout(6, 6));
+        JLabel header = new JLabel("Existing recipes (select to view or edit)");
+        header.setBorder(BorderFactory.createEmptyBorder(4, 2, 4, 2));
+        panel.add(header, BorderLayout.NORTH);
+        panel.add(new JScrollPane(recipeJList), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private void attachFilterListeners() {
+        searchButton.setEnabled(false);
+        resetButton.setEnabled(false);
+        nameField.getDocument().addDocumentListener((SimpleDocumentListener) e -> updateFilterButtons());
+        tagsField.getDocument().addDocumentListener((SimpleDocumentListener) e -> updateFilterButtons());
+        ingredientsField.getDocument().addDocumentListener((SimpleDocumentListener) e -> updateFilterButtons());
+    }
+
+    private void updateFilterButtons() {
+        boolean hasFilters = !getNameQuery().isBlank()
+                || tagsField.getText() != null && !tagsField.getText().isBlank()
+                || ingredientsField.getText() != null && !ingredientsField.getText().isBlank();
+        searchButton.setEnabled(hasFilters);
+        resetButton.setEnabled(hasFilters);
     }
 }
