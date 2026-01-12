@@ -64,7 +64,11 @@ public class RecipeEditorPanel extends JPanel {
         relatedList = new JList<>(relatedModel);
         relatedList.addListSelectionListener(e -> updateRelatedActions());
 
-        instructionsArea = new JTextArea(8, 40);
+        setCompactListRowHeight(ingredientsList);
+        setCompactListRowHeight(tagsList);
+        setCompactListRowHeight(relatedList);
+
+        instructionsArea = new JTextArea(10, 40);
         instructionsArea.setLineWrap(true);
         instructionsArea.setWrapStyleWord(true);
 
@@ -128,9 +132,9 @@ public class RecipeEditorPanel extends JPanel {
         JTextField input = new JTextField();
         input.addActionListener(e -> addListEntry(model, input));
         input.getDocument().addDocumentListener((SimpleDocumentListener) e -> updateListControls());
-        JButton addButton = new JButton("Add");
+        JButton addButton = new JButton("+");
         addButton.addActionListener(e -> addListEntry(model, input));
-        JButton removeButton = new JButton("Remove");
+        JButton removeButton = new JButton("-");
         removeButton.addActionListener(e -> removeSelected(model, list));
         list.addListSelectionListener(e -> updateListControls());
         controls.add(input);
@@ -365,6 +369,13 @@ public class RecipeEditorPanel extends JPanel {
         boolean hasName = nameField.getText() != null && !nameField.getText().trim().isEmpty();
         boolean hasIngredients = ingredientsModel.getSize() > 0;
         saveButton.setEnabled(hasName && hasIngredients);
+    }
+
+    private void setCompactListRowHeight(JList<?> list) {
+        int current = list.getFixedCellHeight();
+        if (current <= 0 || current > 20) {
+            list.setFixedCellHeight(20);
+        }
     }
 
     public void setSaveListener(Consumer<Recipe> saveListener) {
