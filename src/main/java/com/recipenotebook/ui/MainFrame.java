@@ -35,7 +35,11 @@ public class MainFrame extends JFrame {
         editorPanel.setResetListener(this::resetEditorToSelection);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listPanel, editorPanel);
+        listPanel.setMinimumSize(new Dimension(240, 200));
+        editorPanel.setMinimumSize(new Dimension(520, 200));
         splitPane.setResizeWeight(0.35);
+        splitPane.setDividerSize(10);
+        splitPane.setContinuousLayout(true);
         add(splitPane, BorderLayout.CENTER);
 
         attachListListeners();
