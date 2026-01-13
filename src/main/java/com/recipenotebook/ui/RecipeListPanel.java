@@ -16,7 +16,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -55,9 +54,13 @@ public class RecipeListPanel extends JPanel {
 
         JPanel searchPanel = new JPanel();
         searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.Y_AXIS));
-        searchPanel.add(labeledField("Filter text", filterField));
-        searchPanel.add(Box.createVerticalStrut(6));
+        JLabel filterLabel = new JLabel("Filter");
+        filterLabel.setAlignmentX(LEFT_ALIGNMENT);
+        searchPanel.add(filterLabel);
+        searchPanel.add(Box.createVerticalStrut(4));
         searchPanel.add(buildFilterTypePanel());
+        searchPanel.add(Box.createVerticalStrut(6));
+        searchPanel.add(buildFilterFieldPanel());
 
         JPanel buttonRow = new JPanel();
         resetButton = new JButton("Reset");
@@ -88,24 +91,18 @@ public class RecipeListPanel extends JPanel {
     }
 
     private JPanel buildFilterTypePanel() {
-        JPanel panel = new JPanel(new BorderLayout(4, 4));
-        JLabel label = new JLabel("Filter by");
-        label.setPreferredSize(new Dimension(160, 24));
-        panel.add(label, BorderLayout.WEST);
-        JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        radioPanel.add(nameRadio);
-        radioPanel.add(ingredientsRadio);
-        radioPanel.add(tagsRadio);
-        panel.add(radioPanel, BorderLayout.CENTER);
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        panel.add(nameRadio);
+        panel.add(ingredientsRadio);
+        panel.add(tagsRadio);
+        panel.setAlignmentX(LEFT_ALIGNMENT);
         return panel;
     }
 
-    private JPanel labeledField(String label, JTextField field) {
+    private JPanel buildFilterFieldPanel() {
         JPanel panel = new JPanel(new BorderLayout(4, 4));
-        JLabel jLabel = new JLabel(label);
-        jLabel.setPreferredSize(new Dimension(160, 24));
-        panel.add(jLabel, BorderLayout.WEST);
-        panel.add(field, BorderLayout.CENTER);
+        panel.add(filterField, BorderLayout.CENTER);
+        panel.setAlignmentX(LEFT_ALIGNMENT);
         return panel;
     }
 
