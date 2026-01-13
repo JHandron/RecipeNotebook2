@@ -8,6 +8,7 @@ import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -16,6 +17,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -54,9 +56,8 @@ public class RecipeListPanel extends JPanel {
 
         JPanel searchPanel = new JPanel();
         searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.Y_AXIS));
-        searchPanel.setAlignmentX(LEFT_ALIGNMENT);
         JLabel filterLabel = new JLabel("Filter");
-        filterLabel.setAlignmentX(LEFT_ALIGNMENT);
+        alignLeft(filterLabel);
         searchPanel.add(filterLabel);
         searchPanel.add(Box.createVerticalStrut(4));
         searchPanel.add(buildFilterTypePanel());
@@ -66,9 +67,10 @@ public class RecipeListPanel extends JPanel {
         JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         resetButton = new JButton("Reset");
         buttonRow.add(resetButton);
-        buttonRow.setAlignmentX(LEFT_ALIGNMENT);
+        alignLeft(buttonRow);
         searchPanel.add(Box.createVerticalStrut(8));
         searchPanel.add(buttonRow);
+        alignLeft(searchPanel);
 
         listModel = new DefaultListModel<>();
         recipeJList = new JList<>(listModel);
@@ -97,15 +99,21 @@ public class RecipeListPanel extends JPanel {
         panel.add(nameRadio);
         panel.add(ingredientsRadio);
         panel.add(tagsRadio);
-        panel.setAlignmentX(LEFT_ALIGNMENT);
+        alignLeft(panel);
         return panel;
     }
 
     private JPanel buildFilterFieldPanel() {
         JPanel panel = new JPanel(new BorderLayout(4, 4));
         panel.add(filterField, BorderLayout.CENTER);
-        panel.setAlignmentX(LEFT_ALIGNMENT);
+        alignLeft(panel);
         return panel;
+    }
+
+    private void alignLeft(JComponent component) {
+        component.setAlignmentX(LEFT_ALIGNMENT);
+        Dimension preferred = component.getPreferredSize();
+        component.setMaximumSize(new Dimension(Integer.MAX_VALUE, preferred.height));
     }
 
     public void updateList(List<Recipe> recipes) {
