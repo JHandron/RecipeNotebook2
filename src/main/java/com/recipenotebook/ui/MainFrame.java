@@ -49,10 +49,9 @@ public class MainFrame extends JFrame {
     }
 
     private void attachListListeners() {
-        listPanel.addSearchListener(e -> performSearch());
+        listPanel.addFilterChangeListener(this::applyFilter);
         listPanel.addResetListener(e -> {
             listPanel.resetFilters();
-            loadAllRecipes();
         });
         listPanel.addNewRecipeListener(e -> startNewRecipe());
         listPanel.addSelectionChangeListener(this::handleSelectionChange);
@@ -74,23 +73,10 @@ public class MainFrame extends JFrame {
         editorPanel.displayRecipe(newRecipe, allRecipes);
     }
 
-    private void performSearch() {
-        try {
-            allRecipes = repository.listAll();
-            List<Recipe> results = repository.search(
-                    listPanel.getNameQuery(),
-                    listPanel.getTagFilters(),
-                    listPanel.getIngredientKeywords());
-            listPanel.updateList(results);
-        } catch (Exception ex) {
-            showError("Search failed: " + ex.getMessage());
-        }
-    }
-
     private void loadAllRecipes() {
         try {
             allRecipes = repository.listAll();
-            listPanel.updateList(allRecipes);
+            applyFilter();
             if (!allRecipes.isEmpty()) {
                 SwingUtilities.invokeLater(() -> listPanel.clearSelection());
             }
@@ -117,10 +103,78 @@ public class MainFrame extends JFrame {
         }
         Optional<Recipe> match = allRecipes.stream().filter(r -> id.equals(r.getId())).findFirst();
         match.ifPresent(recipe -> SwingUtilities.invokeLater(() -> {
-            listPanel.updateList(allRecipes);
-            listPanel.selectRecipeById(id);
+            List<Recipe> filtered = applyFilter();
+            if (filtered.stream().anyMatch(item -> id.equals(item.getId()))) {
+                listPanel.selectRecipeById(id);
+            }
             editorPanel.displayRecipe(recipe, allRecipes);
         }));
+    }
+
+    private List<Recipe> applyFilter() {
+        String query = listPanel.getFilterText();
+        if (query.isBlank()) {
+            listPanel.updateList(allRecipes);
+            return allRecipes;
+        }
+        RecipeListPanel.FilterType filterType = listPanel.getSelectedFilterType();
+        List<String> tokens = parseTokens(query);
+        List<Recipe> filtered = allRecipes.stream()
+                .filter(recipe -> matchesFilter(recipe, filterType, query, tokens))
+                .toList();
+        listPanel.updateList(filtered);
+        return filtered;
+    }
+
+    private boolean matchesFilter(Recipe recipe, RecipeListPanel.FilterType filterType, String query,
+                                  List<String> tokens) {
+        if (recipe == null) {
+            return false;
+        }
+        switch (filterType) {
+            case INGREDIENTS -> {
+                return matchesIngredientTokens(recipe, tokens);
+            }
+            case TAGS -> {
+                return matchesTagTokens(recipe, tokens);
+            }
+            case NAME -> {
+                String name = recipe.getName();
+                return name != null && name.toLowerCase().contains(query.toLowerCase());
+            }
+            default -> {
+                return true;
+            }
+        }
+    }
+
+    private boolean matchesTagTokens(Recipe recipe, List<String> tokens) {
+        if (tokens.isEmpty()) {
+            return true;
+        }
+        List<String> tags = recipe.getTags();
+        return tokens.stream().allMatch(token -> tags.stream()
+                .anyMatch(tag -> tag != null && tag.toLowerCase().contains(token)));
+    }
+
+    private boolean matchesIngredientTokens(Recipe recipe, List<String> tokens) {
+        if (tokens.isEmpty()) {
+            return true;
+        }
+        List<String> ingredients = recipe.getIngredients();
+        return tokens.stream().anyMatch(token -> ingredients.stream()
+                .anyMatch(ingredient -> ingredient != null && ingredient.toLowerCase().contains(token)));
+    }
+
+    private List<String> parseTokens(String query) {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+        return java.util.Arrays.stream(query.split(","))
+                .map(String::trim)
+                .filter(token -> !token.isBlank())
+                .map(String::toLowerCase)
+                .toList();
     }
 
     private List<ObjectId> openRelatedDialog(ObjectId currentId, List<ObjectId> alreadySelected) {

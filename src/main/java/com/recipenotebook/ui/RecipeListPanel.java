@@ -7,50 +7,60 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.ButtonGroup;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.bson.types.ObjectId;
 
 public class RecipeListPanel extends JPanel {
-    private final JTextField nameField;
-    private final JTextField tagsField;
-    private final JTextField ingredientsField;
+    public enum FilterType {
+        NAME,
+        INGREDIENTS,
+        TAGS
+    }
+
+    private final JTextField filterField;
+    private final JRadioButton nameRadio;
+    private final JRadioButton ingredientsRadio;
+    private final JRadioButton tagsRadio;
     private final DefaultListModel<Recipe> listModel;
     private final JList<Recipe> recipeJList;
-    private final JButton searchButton;
     private final JButton resetButton;
     private final JButton newRecipeButton;
+    private Runnable filterChangeListener;
 
     public RecipeListPanel() {
         setLayout(new BorderLayout(8, 8));
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
-        nameField = new JTextField();
-        tagsField = new JTextField();
-        ingredientsField = new JTextField();
+        filterField = new JTextField();
+        nameRadio = new JRadioButton("Name");
+        ingredientsRadio = new JRadioButton("Ingredients");
+        tagsRadio = new JRadioButton("Tags");
+        nameRadio.setSelected(true);
+        ButtonGroup filterGroup = new ButtonGroup();
+        filterGroup.add(nameRadio);
+        filterGroup.add(ingredientsRadio);
+        filterGroup.add(tagsRadio);
 
         JPanel searchPanel = new JPanel();
         searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.Y_AXIS));
-        searchPanel.add(labeledField("Name", nameField));
+        searchPanel.add(labeledField("Filter text", filterField));
         searchPanel.add(Box.createVerticalStrut(6));
-        searchPanel.add(labeledField("Tags (comma separated)", tagsField));
-        searchPanel.add(Box.createVerticalStrut(6));
-        searchPanel.add(labeledField("Ingredient keywords", ingredientsField));
+        searchPanel.add(buildFilterTypePanel());
 
         JPanel buttonRow = new JPanel();
-        searchButton = new JButton("Search");
         resetButton = new JButton("Reset");
-        buttonRow.add(searchButton);
         buttonRow.add(resetButton);
         searchPanel.add(Box.createVerticalStrut(8));
         searchPanel.add(buttonRow);
@@ -77,6 +87,19 @@ public class RecipeListPanel extends JPanel {
         attachFilterListeners();
     }
 
+    private JPanel buildFilterTypePanel() {
+        JPanel panel = new JPanel(new BorderLayout(4, 4));
+        JLabel label = new JLabel("Filter by");
+        label.setPreferredSize(new Dimension(160, 24));
+        panel.add(label, BorderLayout.WEST);
+        JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        radioPanel.add(nameRadio);
+        radioPanel.add(ingredientsRadio);
+        radioPanel.add(tagsRadio);
+        panel.add(radioPanel, BorderLayout.CENTER);
+        return panel;
+    }
+
     private JPanel labeledField(String label, JTextField field) {
         JPanel panel = new JPanel(new BorderLayout(4, 4));
         JLabel jLabel = new JLabel(label);
@@ -101,34 +124,22 @@ public class RecipeListPanel extends JPanel {
         recipeJList.clearSelection();
     }
 
-    public String getNameQuery() {
-        return nameField.getText().trim();
+    public String getFilterText() {
+        return filterField.getText().trim();
     }
 
-    public List<String> getTagFilters() {
-        String text = tagsField.getText();
-        if (text == null || text.isBlank()) {
-            return List.of();
+    public FilterType getSelectedFilterType() {
+        if (ingredientsRadio.isSelected()) {
+            return FilterType.INGREDIENTS;
         }
-        return Arrays.stream(text.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isBlank())
-                .collect(Collectors.toList());
-    }
-
-    public List<String> getIngredientKeywords() {
-        String text = ingredientsField.getText();
-        if (text == null || text.isBlank()) {
-            return List.of();
+        if (tagsRadio.isSelected()) {
+            return FilterType.TAGS;
         }
-        return Arrays.stream(text.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isBlank())
-                .collect(Collectors.toList());
+        return FilterType.NAME;
     }
 
-    public void addSearchListener(ActionListener listener) {
-        searchButton.addActionListener(listener);
+    public void addFilterChangeListener(Runnable listener) {
+        this.filterChangeListener = listener;
     }
 
     public void addResetListener(ActionListener listener) {
@@ -148,10 +159,10 @@ public class RecipeListPanel extends JPanel {
     }
 
     public void resetFilters() {
-        nameField.setText("");
-        tagsField.setText("");
-        ingredientsField.setText("");
-        updateFilterButtons();
+        filterField.setText("");
+        nameRadio.setSelected(true);
+        updateResetButtonState();
+        notifyFilterChange();
     }
 
     public void selectRecipeById(ObjectId id) {
@@ -178,18 +189,24 @@ public class RecipeListPanel extends JPanel {
     }
 
     private void attachFilterListeners() {
-        searchButton.setEnabled(false);
         resetButton.setEnabled(false);
-        nameField.getDocument().addDocumentListener((SimpleDocumentListener) e -> updateFilterButtons());
-        tagsField.getDocument().addDocumentListener((SimpleDocumentListener) e -> updateFilterButtons());
-        ingredientsField.getDocument().addDocumentListener((SimpleDocumentListener) e -> updateFilterButtons());
+        filterField.getDocument().addDocumentListener((SimpleDocumentListener) e -> {
+            updateResetButtonState();
+            notifyFilterChange();
+        });
+        ActionListener filterTypeListener = e -> notifyFilterChange();
+        nameRadio.addActionListener(filterTypeListener);
+        ingredientsRadio.addActionListener(filterTypeListener);
+        tagsRadio.addActionListener(filterTypeListener);
     }
 
-    private void updateFilterButtons() {
-        boolean hasFilters = !getNameQuery().isBlank()
-                || tagsField.getText() != null && !tagsField.getText().isBlank()
-                || ingredientsField.getText() != null && !ingredientsField.getText().isBlank();
-        searchButton.setEnabled(hasFilters);
-        resetButton.setEnabled(hasFilters);
+    private void updateResetButtonState() {
+        resetButton.setEnabled(!getFilterText().isBlank());
+    }
+
+    private void notifyFilterChange() {
+        if (filterChangeListener != null) {
+            filterChangeListener.run();
+        }
     }
 }
