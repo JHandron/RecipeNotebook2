@@ -54,6 +54,7 @@ public class RecipeListPanel extends JPanel {
 
         JPanel searchPanel = new JPanel();
         searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.Y_AXIS));
+        searchPanel.setAlignmentX(LEFT_ALIGNMENT);
         JLabel filterLabel = new JLabel("Filter");
         filterLabel.setAlignmentX(LEFT_ALIGNMENT);
         searchPanel.add(filterLabel);
@@ -62,9 +63,10 @@ public class RecipeListPanel extends JPanel {
         searchPanel.add(Box.createVerticalStrut(6));
         searchPanel.add(buildFilterFieldPanel());
 
-        JPanel buttonRow = new JPanel();
+        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         resetButton = new JButton("Reset");
         buttonRow.add(resetButton);
+        buttonRow.setAlignmentX(LEFT_ALIGNMENT);
         searchPanel.add(Box.createVerticalStrut(8));
         searchPanel.add(buttonRow);
 
