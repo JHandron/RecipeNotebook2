@@ -1,9 +1,8 @@
-package com.recipenotebook;
+package org.jhandron;
 
-import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
-import com.recipenotebook.ui.MainFrame;
+import org.jhandron.ui.MainFrame;
 
 import javax.swing.SwingUtilities;
 

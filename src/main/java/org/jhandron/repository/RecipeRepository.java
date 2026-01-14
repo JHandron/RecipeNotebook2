@@ -1,11 +1,11 @@
-package com.recipenotebook.repository;
+package org.jhandron.repository;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.Sorts;
-import com.recipenotebook.db.MongoConnectionManager;
-import com.recipenotebook.model.Recipe;
+import org.jhandron.db.MongoConnectionManager;
+import org.jhandron.model.Recipe;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;

@@ -51,7 +51,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.recipenotebook.RecipeNotebookApp</mainClass>
+                            <mainClass>org.jhandron.RecipeNotebookApp</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

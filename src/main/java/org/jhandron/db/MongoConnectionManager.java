@@ -1,4 +1,4 @@
-package com.recipenotebook.db;
+package org.jhandron.db;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;

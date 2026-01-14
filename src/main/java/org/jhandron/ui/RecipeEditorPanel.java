@@ -1,6 +1,6 @@
-package com.recipenotebook.ui;
+package org.jhandron.ui;
 
-import com.recipenotebook.model.Recipe;
+import org.jhandron.model.Recipe;
 import org.bson.types.ObjectId;
 
 import javax.swing.BorderFactory;
@@ -133,6 +133,7 @@ public class RecipeEditorPanel extends JPanel {
         input.addActionListener(e -> addListEntry(model, input));
         input.getDocument().addDocumentListener((SimpleDocumentListener) e -> updateListControls());
         JButton addButton = new JButton("+");
+
         addButton.addActionListener(e -> addListEntry(model, input));
         JButton removeButton = new JButton("-");
         removeButton.addActionListener(e -> removeSelected(model, list));
@@ -156,11 +157,14 @@ public class RecipeEditorPanel extends JPanel {
     }
 
     private void removeSelected(DefaultListModel<String> model, JList<String> list) {
-        int idx = list.getSelectedIndex();
-        if (idx >= 0) {
-            model.remove(idx);
-            updateListControls();
+        List<String> selected = list.getSelectedValuesList();
+        if (selected.isEmpty()) {
+            return;
         }
+        for (String s : selected) {
+            model.removeElement(s);
+        }
+        updateListControls();
     }
 
     private JPanel buildRelatedPanel() {
@@ -391,7 +395,8 @@ public class RecipeEditorPanel extends JPanel {
     private void updateSaveButtonState() {
         boolean hasName = nameField.getText() != null && !nameField.getText().trim().isEmpty();
         boolean hasIngredients = ingredientsModel.getSize() > 0;
-        saveButton.setEnabled(hasName && hasIngredients);
+        boolean hasTags = tagsModel.getSize() > 0;
+        saveButton.setEnabled(hasName && hasIngredients && hasTags);
     }
 
     private void setCompactListRowHeight(JList<?> list) {

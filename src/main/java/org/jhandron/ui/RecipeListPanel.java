@@ -1,6 +1,6 @@
-package com.recipenotebook.ui;
+package org.jhandron.ui;
 
-import com.recipenotebook.model.Recipe;
+import org.jhandron.model.Recipe;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;

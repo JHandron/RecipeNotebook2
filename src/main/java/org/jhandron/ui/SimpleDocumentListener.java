@@ -1,4 +1,4 @@
-package com.recipenotebook.ui;
+package org.jhandron.ui;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;

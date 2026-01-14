@@ -1,4 +1,4 @@
-package com.recipenotebook.model;
+package org.jhandron.model;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;

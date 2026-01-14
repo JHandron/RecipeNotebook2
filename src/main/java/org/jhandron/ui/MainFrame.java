@@ -1,19 +1,13 @@
-package com.recipenotebook.ui;
+package org.jhandron.ui;
 
-import com.recipenotebook.model.Recipe;
-import com.recipenotebook.repository.RecipeRepository;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+import org.jhandron.model.Recipe;
+import org.jhandron.repository.RecipeRepository;
 import org.bson.types.ObjectId;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -43,6 +37,7 @@ public class MainFrame extends JFrame {
         repository = new RecipeRepository(p_testEnvironment);
         listPanel = new RecipeListPanel();
         editorTabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
+        setJMenuBar(buildMenuBar());
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listPanel, editorTabs);
         listPanel.setMinimumSize(new Dimension(240, 200));
@@ -56,6 +51,42 @@ public class MainFrame extends JFrame {
         loadAllRecipes(true);
         pack();
         setLocationRelativeTo(null);
+    }
+
+    private JMenuBar buildMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+
+        JMenu fileMenu = new JMenu("File");
+        JMenuItem exitItem = new JMenuItem("Exit");
+        exitItem.addActionListener(event -> System.exit(0));
+        fileMenu.add(exitItem);
+
+        JMenu viewMenu = new JMenu("View");
+        JRadioButtonMenuItem lightModeItem = new JRadioButtonMenuItem("Light Mode");
+        JRadioButtonMenuItem darkModeItem = new JRadioButtonMenuItem("Dark Mode");
+        ButtonGroup themeGroup = new ButtonGroup();
+        themeGroup.add(lightModeItem);
+        themeGroup.add(darkModeItem);
+
+        boolean darkActive = FlatLaf.isLafDark();
+        lightModeItem.setSelected(!darkActive);
+        darkModeItem.setSelected(darkActive);
+
+        lightModeItem.addActionListener(event -> applyLookAndFeel(new FlatLightLaf()));
+        darkModeItem.addActionListener(event -> applyLookAndFeel(new FlatDarkLaf()));
+
+        viewMenu.add(lightModeItem);
+        viewMenu.add(darkModeItem);
+
+        menuBar.add(fileMenu);
+        menuBar.add(viewMenu);
+        return menuBar;
+    }
+
+    private void applyLookAndFeel(FlatLaf lookAndFeel) {
+        FlatLaf.setup(lookAndFeel);
+        FlatLaf.updateUI();
+        SwingUtilities.updateComponentTreeUI(this);
     }
 
     private void attachListListeners() {
