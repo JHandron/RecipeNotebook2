@@ -21,13 +21,13 @@ public class MainFrame extends JFrame {
     private final RecipeEditorPanel editorPanel;
     private List<Recipe> allRecipes = new ArrayList<>();
 
-    public MainFrame() {
-        super("RecipeNotebook");
+    public MainFrame(boolean p_testEnvironment) {
+        super("Recipe Notebook");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(1100, 650));
 
-        repository = new RecipeRepository();
+        repository = new RecipeRepository(p_testEnvironment);
         listPanel = new RecipeListPanel();
         editorPanel = new RecipeEditorPanel();
         editorPanel.setRelatedSelector(this::openRelatedDialog);

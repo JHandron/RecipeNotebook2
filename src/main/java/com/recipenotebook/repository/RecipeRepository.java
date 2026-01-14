@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 public class RecipeRepository {
     private final MongoCollection<Document> collection;
 
-    public RecipeRepository() {
-        this.collection = MongoConnectionManager.getInstance().getRecipeCollection();
+    public RecipeRepository(boolean p_testEnvironment) {
+        this.collection = MongoConnectionManager.getInstance().getRecipeCollection(p_testEnvironment);
     }
 
     public List<Recipe> listAll() {
