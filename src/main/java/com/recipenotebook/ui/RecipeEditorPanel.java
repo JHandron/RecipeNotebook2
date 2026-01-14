@@ -247,6 +247,29 @@ public class RecipeEditorPanel extends JPanel {
         updateSaveButtonState();
     }
 
+    public void updateKnownRecipes(List<Recipe> knownRecipes) {
+        this.knownRecipes = new ArrayList<>(knownRecipes);
+        updateLookup(knownRecipes);
+        List<ObjectId> selectedIds = relatedList.getSelectedValuesList().stream()
+                .map(RelatedListItem::id)
+                .toList();
+        List<ObjectId> relatedIds = getRelatedIds();
+        relatedModel.clear();
+        for (ObjectId id : relatedIds) {
+            relatedModel.addElement(toRelatedItem(id));
+        }
+        for (int i = 0; i < relatedModel.size(); i++) {
+            if (selectedIds.contains(relatedModel.get(i).id())) {
+                relatedList.addSelectionInterval(i, i);
+            }
+        }
+        updateRelatedActions();
+    }
+
+    public ObjectId getCurrentRecipeId() {
+        return currentRecipe != null ? currentRecipe.getId() : null;
+    }
+
     private void updateLookup(List<Recipe> recipes) {
         recipeNameLookup.clear();
         for (Recipe r : recipes) {

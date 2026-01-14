@@ -4,21 +4,34 @@ import com.recipenotebook.model.Recipe;
 import com.recipenotebook.repository.RecipeRepository;
 import org.bson.types.ObjectId;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class MainFrame extends JFrame {
     private final RecipeRepository repository;
     private final RecipeListPanel listPanel;
-    private final RecipeEditorPanel editorPanel;
+    private final JTabbedPane editorTabs;
+    private final Map<ObjectId, RecipeEditorPanel> openRecipeTabs = new HashMap<>();
+    private final Map<RecipeEditorPanel, TabInfo> tabInfoLookup = new HashMap<>();
     private List<Recipe> allRecipes = new ArrayList<>();
 
     public MainFrame(boolean p_testEnvironment) {
@@ -29,21 +42,18 @@ public class MainFrame extends JFrame {
 
         repository = new RecipeRepository(p_testEnvironment);
         listPanel = new RecipeListPanel();
-        editorPanel = new RecipeEditorPanel();
-        editorPanel.setRelatedSelector(this::openRelatedDialog);
-        editorPanel.setSaveListener(this::saveRecipe);
-        editorPanel.setResetListener(this::resetEditorToSelection);
+        editorTabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listPanel, editorPanel);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listPanel, editorTabs);
         listPanel.setMinimumSize(new Dimension(240, 200));
-        editorPanel.setMinimumSize(new Dimension(520, 200));
+        editorTabs.setMinimumSize(new Dimension(520, 200));
         splitPane.setResizeWeight(0.35);
         splitPane.setDividerSize(10);
         splitPane.setContinuousLayout(true);
         add(splitPane, BorderLayout.CENTER);
 
         attachListListeners();
-        loadAllRecipes();
+        loadAllRecipes(true);
         pack();
         setLocationRelativeTo(null);
     }
@@ -54,43 +64,49 @@ public class MainFrame extends JFrame {
             listPanel.resetFilters();
         });
         listPanel.addNewRecipeListener(e -> startNewRecipe());
-        listPanel.addSelectionChangeListener(this::handleSelectionChange);
-    }
-
-    private void handleSelectionChange(ListSelectionEvent event) {
-        if (event.getValueIsAdjusting()) {
-            return;
-        }
-        Recipe selected = listPanel.getSelectedRecipe();
-        if (selected != null) {
-            editorPanel.displayRecipe(selected, allRecipes);
-        }
+        listPanel.addSelectionListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                if (event.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(event)) {
+                    Recipe selected = listPanel.getSelectedRecipe();
+                    if (selected != null) {
+                        openRecipeTab(selected);
+                    }
+                }
+            }
+        });
     }
 
     private void startNewRecipe() {
         listPanel.clearSelection();
         Recipe newRecipe = new Recipe();
-        editorPanel.displayRecipe(newRecipe, allRecipes);
+        openRecipeTab(newRecipe);
     }
 
-    private void loadAllRecipes() {
+    private void loadAllRecipes(boolean openNewTab) {
         try {
             allRecipes = repository.listAll();
             applyFilter();
-            if (!allRecipes.isEmpty()) {
-                SwingUtilities.invokeLater(() -> listPanel.clearSelection());
+            refreshEditorReferences();
+            if (openNewTab) {
+                if (!allRecipes.isEmpty()) {
+                    SwingUtilities.invokeLater(() -> listPanel.clearSelection());
+                }
+                startNewRecipe();
             }
-            startNewRecipe();
         } catch (Exception ex) {
             showError("Unable to load recipes: " + ex.getMessage());
         }
     }
 
-    private void saveRecipe(Recipe recipe) {
+    private void saveRecipe(RecipeEditorPanel panel, Recipe recipe) {
         try {
             Recipe saved = repository.save(recipe);
-            loadAllRecipes();
+            loadAllRecipes(false);
             selectRecipe(saved.getId());
+            panel.displayRecipe(saved, allRecipes);
+            updateTabTitle(panel, saved);
+            registerRecipeTab(panel, saved);
             JOptionPane.showMessageDialog(this, "Recipe saved successfully.", "Saved", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
             showError("Unable to save recipe: " + ex.getMessage());
@@ -107,7 +123,6 @@ public class MainFrame extends JFrame {
             if (filtered.stream().anyMatch(item -> id.equals(item.getId()))) {
                 listPanel.selectRecipeById(id);
             }
-            editorPanel.displayRecipe(recipe, allRecipes);
         }));
     }
 
@@ -187,16 +202,95 @@ public class MainFrame extends JFrame {
         return selected;
     }
 
-    private void resetEditorToSelection() {
-        Recipe selected = listPanel.getSelectedRecipe();
-        if (selected != null) {
-            editorPanel.displayRecipe(selected, allRecipes);
-        } else {
-            startNewRecipe();
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void openRecipeTab(Recipe recipe) {
+        if (recipe == null) {
+            return;
+        }
+        ObjectId recipeId = recipe.getId();
+        if (recipeId != null && openRecipeTabs.containsKey(recipeId)) {
+            RecipeEditorPanel existing = openRecipeTabs.get(recipeId);
+            editorTabs.setSelectedComponent(existing);
+            return;
+        }
+        RecipeEditorPanel panel = new RecipeEditorPanel();
+        panel.setRelatedSelector(this::openRelatedDialog);
+        panel.setSaveListener(savedRecipe -> saveRecipe(panel, savedRecipe));
+        panel.displayRecipe(recipe, allRecipes);
+
+        String title = getTabTitle(recipe);
+        editorTabs.addTab(title, panel);
+        int index = editorTabs.indexOfComponent(panel);
+        TabInfo tabInfo = buildTabHeader(title, () -> closeTab(panel));
+        editorTabs.setTabComponentAt(index, tabInfo.container());
+        tabInfoLookup.put(panel, tabInfo);
+        editorTabs.setSelectedComponent(panel);
+
+        registerRecipeTab(panel, recipe);
+    }
+
+    private void registerRecipeTab(RecipeEditorPanel panel, Recipe recipe) {
+        ObjectId recipeId = recipe.getId();
+        if (recipeId != null) {
+            openRecipeTabs.put(recipeId, panel);
         }
     }
 
-    private void showError(String message) {
-        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    private void closeTab(RecipeEditorPanel panel) {
+        ObjectId recipeId = panel.getCurrentRecipeId();
+        if (recipeId != null) {
+            openRecipeTabs.remove(recipeId);
+        }
+        tabInfoLookup.remove(panel);
+        editorTabs.remove(panel);
+    }
+
+    private String getTabTitle(Recipe recipe) {
+        if (recipe == null || recipe.getId() == null) {
+            return "[New Recipe]";
+        }
+        String name = recipe.getName();
+        return name == null || name.isBlank() ? "[Untitled Recipe]" : name;
+    }
+
+    private void updateTabTitle(RecipeEditorPanel panel, Recipe recipe) {
+        TabInfo info = tabInfoLookup.get(panel);
+        if (info == null) {
+            return;
+        }
+        String title = getTabTitle(recipe);
+        info.titleLabel().setText(title);
+    }
+
+    private TabInfo buildTabHeader(String title, Runnable onClose) {
+        JPanel container = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        container.setOpaque(false);
+
+        JLabel titleLabel = new JLabel(title);
+
+        JButton closeButton = new JButton("x");
+        closeButton.setFocusable(false);
+        closeButton.setMargin(new Insets(0, 4, 0, 4));
+        closeButton.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
+        closeButton.addActionListener(e -> onClose.run());
+
+        container.add(titleLabel);
+        container.add(Box.createHorizontalStrut(2));
+        container.add(closeButton);
+        return new TabInfo(container, titleLabel);
+    }
+
+    private void refreshEditorReferences() {
+        for (int i = 0; i < editorTabs.getTabCount(); i++) {
+            if (editorTabs.getComponentAt(i) instanceof RecipeEditorPanel panel) {
+                panel.updateKnownRecipes(allRecipes);
+            }
+        }
+    }
+
+    private record TabInfo(JPanel container, JLabel titleLabel) {
     }
 }
