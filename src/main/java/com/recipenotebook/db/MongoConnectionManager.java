@@ -34,8 +34,8 @@ public class MongoConnectionManager {
         return instance;
     }
 
-    public MongoCollection<Document> getRecipeCollection() {
-        return database.getCollection("recipes");
+    public MongoCollection<Document> getRecipeCollection(boolean p_testEnvironment) {
+        return p_testEnvironment ? database.getCollection("recipes-dev") : database.getCollection("recipes");
     }
 
     public void close() {
