@@ -93,15 +93,19 @@ public class RecipeRepository {
         return recipe;
     }
 
-    public int exportToJson(Path path) throws IOException {
+    public int exportToJson(Path path, List<Recipe> recipes) throws IOException {
         Objects.requireNonNull(path, "path cannot be null");
+        Objects.requireNonNull(recipes, "recipes cannot be null");
         JsonWriterSettings settings = JsonWriterSettings.builder()
                 .outputMode(JsonMode.EXTENDED)
                 .build();
         int count = 0;
         try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
-            for (Document doc : collection.find().sort(Sorts.ascending("name"))) {
-                writer.write(doc.toJson(settings));
+            for (Recipe recipe : recipes) {
+                if (recipe == null) {
+                    continue;
+                }
+                writer.write(recipe.toDocument().toJson(settings));
                 writer.newLine();
                 count++;
             }

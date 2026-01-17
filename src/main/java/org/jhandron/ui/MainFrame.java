@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Vector;
 
 public class MainFrame extends JFrame {
     private final RecipeRepository repository;
@@ -124,6 +125,17 @@ public class MainFrame extends JFrame {
     }
 
     private void exportRecipes() {
+        if (allRecipes.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "There are no recipes available to export.",
+                    "Nothing to Export",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        List<Recipe> selected = promptForExportRecipes();
+        if (selected.isEmpty()) {
+            return;
+        }
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Export Recipes");
         chooser.setFileFilter(new FileNameExtensionFilter("JSON Lines (*.json)", "json"));
@@ -136,7 +148,7 @@ public class MainFrame extends JFrame {
             file = new File(file.getParentFile(), file.getName() + ".json");
         }
         try {
-            int count = repository.exportToJson(file.toPath());
+            int count = repository.exportToJson(file.toPath(), selected);
             JOptionPane.showMessageDialog(this,
                     "Exported " + count + " recipes to:\n" + file.getAbsolutePath(),
                     "Export Complete",
@@ -144,6 +156,32 @@ public class MainFrame extends JFrame {
         } catch (Exception ex) {
             showError("Unable to export recipes: " + ex.getMessage());
         }
+    }
+
+    private List<Recipe> promptForExportRecipes() {
+        JList<Recipe> recipeList = new JList<>(new Vector<>(allRecipes));
+        recipeList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        recipeList.setVisibleRowCount(12);
+        JScrollPane scrollPane = new JScrollPane(recipeList);
+        scrollPane.setPreferredSize(new Dimension(420, 240));
+
+        int result = JOptionPane.showConfirmDialog(this,
+                scrollPane,
+                "Select Recipes to Export",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE);
+        if (result != JOptionPane.OK_OPTION) {
+            return List.of();
+        }
+        List<Recipe> selected = recipeList.getSelectedValuesList();
+        if (selected.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Select at least one recipe to export.",
+                    "No Recipes Selected",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return List.of();
+        }
+        return selected;
     }
 
     private void applyLookAndFeel(FlatLaf lookAndFeel) {
