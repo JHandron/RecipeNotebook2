@@ -9,7 +9,15 @@ import org.jhandron.model.Recipe;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
+import org.bson.json.JsonMode;
+import org.bson.json.JsonWriterSettings;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -83,5 +91,44 @@ public class RecipeRepository {
         collection.replaceOne(Filters.eq("_id", recipe.getId()), recipe.toDocument(),
                 new ReplaceOptions().upsert(true));
         return recipe;
+    }
+
+    public int exportToJson(Path path) throws IOException {
+        Objects.requireNonNull(path, "path cannot be null");
+        JsonWriterSettings settings = JsonWriterSettings.builder()
+                .outputMode(JsonMode.EXTENDED)
+                .build();
+        int count = 0;
+        try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
+            for (Document doc : collection.find().sort(Sorts.ascending("name"))) {
+                writer.write(doc.toJson(settings));
+                writer.newLine();
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public int importFromJson(Path path) throws IOException {
+        Objects.requireNonNull(path, "path cannot be null");
+        int count = 0;
+        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String trimmed = line.trim();
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
+                Document doc = Document.parse(trimmed);
+                ObjectId id = doc.getObjectId("_id");
+                if (id == null) {
+                    id = new ObjectId();
+                    doc.put("_id", id);
+                }
+                collection.replaceOne(Filters.eq("_id", id), doc, new ReplaceOptions().upsert(true));
+                count++;
+            }
+        }
+        return count;
     }
 }
