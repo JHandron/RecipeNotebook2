@@ -6,17 +6,20 @@ import org.jhandron.repository.RecipeRepository;
 import org.bson.types.ObjectId;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Vector;
 
 public class MainFrame extends JFrame {
     private final RecipeRepository repository;
@@ -56,8 +59,15 @@ public class MainFrame extends JFrame {
         JMenuBar menuBar = new JMenuBar();
 
         JMenu fileMenu = new JMenu("File");
+        JMenuItem importItem = new JMenuItem("Import Recipes...");
+        importItem.addActionListener(event -> importRecipes());
+        JMenuItem exportItem = new JMenuItem("Export Recipes...");
+        exportItem.addActionListener(event -> exportRecipes());
         JMenuItem exitItem = new JMenuItem("Exit");
         exitItem.addActionListener(event -> System.exit(0));
+        fileMenu.add(importItem);
+        fileMenu.add(exportItem);
+        fileMenu.addSeparator();
         fileMenu.add(exitItem);
 
         JMenu viewMenu = new JMenu("View");
@@ -81,6 +91,97 @@ public class MainFrame extends JFrame {
         menuBar.add(fileMenu);
         menuBar.add(viewMenu);
         return menuBar;
+    }
+
+    private void importRecipes() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Import Recipes");
+        chooser.setFileFilter(new FileNameExtensionFilter("JSON Lines (*.json)", "json"));
+        int result = chooser.showOpenDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File file = chooser.getSelectedFile();
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Import recipes from:\n" + file.getAbsolutePath()
+                        + "\n\nExisting recipes with matching IDs will be updated.",
+                "Confirm Import",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (confirm != JOptionPane.OK_OPTION) {
+            return;
+        }
+        try {
+            int count = repository.importFromJson(file.toPath());
+            loadAllRecipes(false);
+            refreshEditorReferences();
+            JOptionPane.showMessageDialog(this,
+                    "Imported " + count + " recipes.",
+                    "Import Complete",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            showError("Unable to import recipes: " + ex.getMessage());
+        }
+    }
+
+    private void exportRecipes() {
+        if (allRecipes.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "There are no recipes available to export.",
+                    "Nothing to Export",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        List<Recipe> selected = promptForExportRecipes();
+        if (selected.isEmpty()) {
+            return;
+        }
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Export Recipes");
+        chooser.setFileFilter(new FileNameExtensionFilter("JSON Lines (*.json)", "json"));
+        int result = chooser.showSaveDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File file = chooser.getSelectedFile();
+        if (!file.getName().toLowerCase().endsWith(".json")) {
+            file = new File(file.getParentFile(), file.getName() + ".json");
+        }
+        try {
+            int count = repository.exportToJson(file.toPath(), selected);
+            JOptionPane.showMessageDialog(this,
+                    "Exported " + count + " recipes to:\n" + file.getAbsolutePath(),
+                    "Export Complete",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            showError("Unable to export recipes: " + ex.getMessage());
+        }
+    }
+
+    private List<Recipe> promptForExportRecipes() {
+        JList<Recipe> recipeList = new JList<>(new Vector<>(allRecipes));
+        recipeList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        recipeList.setVisibleRowCount(12);
+        JScrollPane scrollPane = new JScrollPane(recipeList);
+        scrollPane.setPreferredSize(new Dimension(420, 240));
+
+        int result = JOptionPane.showConfirmDialog(this,
+                scrollPane,
+                "Select Recipes to Export",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE);
+        if (result != JOptionPane.OK_OPTION) {
+            return List.of();
+        }
+        List<Recipe> selected = recipeList.getSelectedValuesList();
+        if (selected.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Select at least one recipe to export.",
+                    "No Recipes Selected",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return List.of();
+        }
+        return selected;
     }
 
     private void applyLookAndFeel(FlatLaf lookAndFeel) {
