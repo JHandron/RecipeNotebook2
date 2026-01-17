@@ -1,5 +1,6 @@
 package org.jhandron;
 
+import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import org.jhandron.ui.MainFrame;
@@ -31,7 +32,7 @@ public final class RecipeNotebookApp {
 
     private static void setupLookAndFeel() {
         try {
-            FlatLightLaf.setup();
+            FlatIntelliJLaf.setup();
             FlatLaf.setUseNativeWindowDecorations(true);
         } catch (Exception ex) {
             System.err.println("Failed to initialize LaF: " + ex.getMessage());

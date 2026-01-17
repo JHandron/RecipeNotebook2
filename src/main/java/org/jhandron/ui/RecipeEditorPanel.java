@@ -15,10 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -144,6 +141,13 @@ public class RecipeEditorPanel extends JPanel {
         controls.add(Box.createHorizontalStrut(4));
         controls.add(removeButton);
         panel.add(controls, BorderLayout.SOUTH);
+
+        //Bold the button labels
+        Font currentFont = addButton.getFont();
+        Font boldFont = currentFont.deriveFont(Font.BOLD);
+        addButton.setFont(boldFont);
+        removeButton.setFont(boldFont);
+
         return new ListControlGroup(panel, input, addButton, removeButton, list);
     }
 
@@ -357,7 +361,7 @@ public class RecipeEditorPanel extends JPanel {
     }
 
     private void updateModeIndicators() {
-        boolean editingExisting = currentRecipe != null && currentRecipe.getId() != null;
+        final boolean editingExisting = currentRecipe != null && currentRecipe.getId() != null;
         if (editingExisting) {
             modeBadge.setText("Editing existing recipe");
             modeBadge.setBackground(new Color(0xFFF4CC));
@@ -379,13 +383,13 @@ public class RecipeEditorPanel extends JPanel {
         if (controls == null) {
             return;
         }
-        boolean hasInput = controls.input().getText() != null && !controls.input().getText().trim().isEmpty();
+        final boolean hasInput = controls.input().getText() != null && !controls.input().getText().trim().isEmpty();
         controls.addButton().setEnabled(hasInput);
         controls.removeButton().setEnabled(!controls.list().isSelectionEmpty());
     }
 
     private void updateRelatedActions() {
-        boolean hasOptions = knownRecipes.stream()
+        final boolean hasOptions = knownRecipes.stream()
                 .anyMatch(r -> r.getId() != null && (currentRecipe == null || !r.getId().equals(currentRecipe.getId())));
         addRelatedButton.setEnabled(hasOptions);
         addRelatedButton.setToolTipText(hasOptions ? "Choose existing recipes to relate to this one." : "No other saved recipes to relate yet.");
@@ -393,14 +397,14 @@ public class RecipeEditorPanel extends JPanel {
     }
 
     private void updateSaveButtonState() {
-        boolean hasName = nameField.getText() != null && !nameField.getText().trim().isEmpty();
-        boolean hasIngredients = ingredientsModel.getSize() > 0;
-        boolean hasTags = tagsModel.getSize() > 0;
+        final boolean hasName = nameField.getText() != null && !nameField.getText().trim().isEmpty();
+        final boolean hasIngredients = ingredientsModel.getSize() > 0;
+        final boolean hasTags = tagsModel.getSize() > 0;
         saveButton.setEnabled(hasName && hasIngredients && hasTags);
     }
 
     private void setCompactListRowHeight(JList<?> list) {
-        int current = list.getFixedCellHeight();
+        final int current = list.getFixedCellHeight();
         if (current <= 0 || current > 20) {
             list.setFixedCellHeight(20);
         }

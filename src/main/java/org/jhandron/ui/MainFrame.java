@@ -1,8 +1,6 @@
 package org.jhandron.ui;
 
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatLaf;
-import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.*;
 import org.jhandron.model.Recipe;
 import org.jhandron.repository.RecipeRepository;
 import org.bson.types.ObjectId;
@@ -30,13 +28,14 @@ public class MainFrame extends JFrame {
 
     public MainFrame(boolean p_testEnvironment) {
         super("Recipe Notebook");
+        setIconImage(new ImageIcon("C:\\Users\\Jason\\Downloads\\RecipeNotebook2\\Cooking_icon.png").getImage());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(1100, 650));
 
         repository = new RecipeRepository(p_testEnvironment);
         listPanel = new RecipeListPanel();
-        editorTabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
+        editorTabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
         setJMenuBar(buildMenuBar());
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listPanel, editorTabs);
@@ -64,6 +63,7 @@ public class MainFrame extends JFrame {
         JMenu viewMenu = new JMenu("View");
         JRadioButtonMenuItem lightModeItem = new JRadioButtonMenuItem("Light Mode");
         JRadioButtonMenuItem darkModeItem = new JRadioButtonMenuItem("Dark Mode");
+
         ButtonGroup themeGroup = new ButtonGroup();
         themeGroup.add(lightModeItem);
         themeGroup.add(darkModeItem);
@@ -72,8 +72,8 @@ public class MainFrame extends JFrame {
         lightModeItem.setSelected(!darkActive);
         darkModeItem.setSelected(darkActive);
 
-        lightModeItem.addActionListener(event -> applyLookAndFeel(new FlatLightLaf()));
-        darkModeItem.addActionListener(event -> applyLookAndFeel(new FlatDarkLaf()));
+        lightModeItem.addActionListener(event -> applyLookAndFeel(new FlatIntelliJLaf()));
+        darkModeItem.addActionListener(event -> applyLookAndFeel(new FlatDarculaLaf()));
 
         viewMenu.add(lightModeItem);
         viewMenu.add(darkModeItem);
@@ -138,7 +138,7 @@ public class MainFrame extends JFrame {
             panel.displayRecipe(saved, allRecipes);
             updateTabTitle(panel, saved);
             registerRecipeTab(panel, saved);
-            JOptionPane.showMessageDialog(this, "Recipe saved successfully.", "Saved", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, recipe.getName() + "  recipe created.", "Saved", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
             showError("Unable to save recipe: " + ex.getMessage());
         }

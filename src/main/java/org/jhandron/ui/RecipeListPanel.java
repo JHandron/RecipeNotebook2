@@ -56,9 +56,9 @@ public class RecipeListPanel extends JPanel {
         JPanel searchPanel = new JPanel();
         searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.Y_AXIS));
         searchPanel.setBorder(BorderFactory.createTitledBorder("Filter"));
-        searchPanel.add(buildFilterFieldPanel());
-        searchPanel.add(Box.createVerticalStrut(6));
         searchPanel.add(buildFilterTypePanel());
+        searchPanel.add(Box.createVerticalStrut(6));
+        searchPanel.add(buildFilterFieldPanel());
 
         JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         resetButton = new JButton("Reset");
@@ -73,7 +73,7 @@ public class RecipeListPanel extends JPanel {
         JPanel newRecipePanel = new JPanel(new BorderLayout(6, 6));
         newRecipePanel.setBorder(BorderFactory.createTitledBorder("Start a new recipe"));
         newRecipeButton = new JButton("New Recipe");
-        JLabel newRecipeHint = new JLabel("Create a brand new recipe instead of editing a selection.");
+        JLabel newRecipeHint = new JLabel("Add a new recipe to the notebook.");
         newRecipePanel.add(newRecipeHint, BorderLayout.CENTER);
         newRecipePanel.add(newRecipeButton, BorderLayout.EAST);
 
