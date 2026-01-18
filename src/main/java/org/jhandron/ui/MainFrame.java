@@ -198,7 +198,6 @@ public class MainFrame extends JFrame {
             listPanel.resetFilters();
         });
         listPanel.addNewRecipeListener(e -> startNewRecipe());
-        listPanel.addExportPdfListener(e -> exportSelectedRecipePdf());
         listPanel.addSelectionListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent event) {
@@ -210,7 +209,6 @@ public class MainFrame extends JFrame {
                 }
             }
         });
-        listPanel.addSelectionChangeListener(e -> updateExportPdfState());
     }
 
     private void startNewRecipe() {
@@ -266,7 +264,6 @@ public class MainFrame extends JFrame {
         String query = listPanel.getFilterText();
         if (query.isBlank()) {
             listPanel.updateList(allRecipes);
-            updateExportPdfState();
             return allRecipes;
         }
         RecipeListPanel.FilterType filterType = listPanel.getSelectedFilterType();
@@ -275,7 +272,6 @@ public class MainFrame extends JFrame {
                 .filter(recipe -> matchesFilter(recipe, filterType, query, tokens))
                 .toList();
         listPanel.updateList(filtered);
-        updateExportPdfState();
         return filtered;
     }
 
@@ -357,6 +353,7 @@ public class MainFrame extends JFrame {
         RecipeEditorPanel panel = new RecipeEditorPanel();
         panel.setRelatedSelector(this::openRelatedDialog);
         panel.setSaveListener(savedRecipe -> saveRecipe(panel, savedRecipe));
+        panel.setExportPdfListener(this::exportRecipePdf);
         panel.displayRecipe(recipe, allRecipes);
 
         String title = getTabTitle(recipe);
@@ -429,17 +426,11 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void updateExportPdfState() {
-        Recipe selected = listPanel.getSelectedRecipe();
-        listPanel.setExportPdfEnabled(selected != null && selected.getId() != null);
-    }
-
-    private void exportSelectedRecipePdf() {
-        Recipe selected = listPanel.getSelectedRecipe();
+    private void exportRecipePdf(Recipe selected) {
         if (selected == null || selected.getId() == null) {
             JOptionPane.showMessageDialog(this,
-                    "Select an existing recipe to export.",
-                    "No Recipe Selected",
+                    "Save the recipe before exporting a PDF.",
+                    "Recipe Not Saved",
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
