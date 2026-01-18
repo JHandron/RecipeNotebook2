@@ -1,5 +1,6 @@
 package org.jhandron.ui;
 
+import com.formdev.flatlaf.ui.FlatTextFieldUI;
 import org.jhandron.model.Recipe;
 
 import javax.swing.BorderFactory;
@@ -49,9 +50,9 @@ public class RecipeListPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         filterField = new JTextField();
-        filterField.putClientProperty("JTextField.placeholderText", "Filter");
+        filterField.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Filter Recipes");
         filterField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, Boolean.TRUE);
-        filterField.putClientProperty("JTextField.leadingIcon",
+        filterField.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
                 new AlphaIcon(new FlatSVGIcon("icons/search.svg", 14, 14), 0.6f));
         nameRadio = new JRadioButton("Name");
         ingredientsRadio = new JRadioButton("Ingredients");
@@ -94,7 +95,7 @@ public class RecipeListPanel extends JPanel {
     }
 
     private JPanel buildFilterTypePanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
         panel.add(nameRadio);
         panel.add(ingredientsRadio);
         panel.add(tagsRadio);
