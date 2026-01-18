@@ -194,9 +194,6 @@ public class MainFrame extends JFrame {
 
     private void attachListListeners() {
         listPanel.addFilterChangeListener(this::applyFilter);
-        listPanel.addResetListener(e -> {
-            listPanel.resetFilters();
-        });
         listPanel.addNewRecipeListener(e -> startNewRecipe());
         listPanel.addSelectionListener(new MouseAdapter() {
             @Override

@@ -8,6 +8,7 @@ import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.ButtonGroup;
+import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -15,12 +16,16 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ActionListener;
 import java.util.List;
 import org.bson.types.ObjectId;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 public class RecipeListPanel extends JPanel {
     public enum FilterType {
@@ -35,7 +40,6 @@ public class RecipeListPanel extends JPanel {
     private final JRadioButton tagsRadio;
     private final DefaultListModel<Recipe> listModel;
     private final JList<Recipe> recipeJList;
-    private final JButton resetButton;
     private final JButton newRecipeButton;
     private Runnable filterChangeListener;
 
@@ -44,6 +48,10 @@ public class RecipeListPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         filterField = new JTextField();
+        filterField.putClientProperty("JTextField.placeholderText", "Filter");
+        filterField.putClientProperty("JTextField.showClearButton", true);
+        filterField.putClientProperty("JTextField.leadingIcon",
+                new AlphaIcon(new FlatSVGIcon("icons/search.svg", 14, 14), 0.6f));
         nameRadio = new JRadioButton("Name");
         ingredientsRadio = new JRadioButton("Ingredients");
         tagsRadio = new JRadioButton("Tags");
@@ -59,12 +67,6 @@ public class RecipeListPanel extends JPanel {
         searchPanel.add(buildFilterTypePanel());
         searchPanel.add(Box.createVerticalStrut(6));
         searchPanel.add(buildFilterFieldPanel());
-
-        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        resetButton = new JButton("Reset");
-        buttonRow.add(resetButton);
-        searchPanel.add(Box.createVerticalStrut(8));
-        searchPanel.add(buttonRow);
 
         listModel = new DefaultListModel<>();
         recipeJList = new JList<>(listModel);
@@ -143,10 +145,6 @@ public class RecipeListPanel extends JPanel {
         this.filterChangeListener = listener;
     }
 
-    public void addResetListener(ActionListener listener) {
-        resetButton.addActionListener(listener);
-    }
-
     public void addNewRecipeListener(ActionListener listener) {
         newRecipeButton.addActionListener(listener);
     }
@@ -162,7 +160,6 @@ public class RecipeListPanel extends JPanel {
     public void resetFilters() {
         filterField.setText("");
         nameRadio.setSelected(true);
-        updateResetButtonState();
         notifyFilterChange();
     }
 
@@ -190,9 +187,10 @@ public class RecipeListPanel extends JPanel {
     }
 
     private void attachFilterListeners() {
-        resetButton.setEnabled(false);
         filterField.getDocument().addDocumentListener((SimpleDocumentListener) e -> {
-            updateResetButtonState();
+            if (getFilterText().isBlank()) {
+                nameRadio.setSelected(true);
+            }
             notifyFilterChange();
         });
         ActionListener filterTypeListener = e -> notifyFilterChange();
@@ -201,13 +199,37 @@ public class RecipeListPanel extends JPanel {
         tagsRadio.addActionListener(filterTypeListener);
     }
 
-    private void updateResetButtonState() {
-        resetButton.setEnabled(!getFilterText().isBlank());
-    }
-
     private void notifyFilterChange() {
         if (filterChangeListener != null) {
             filterChangeListener.run();
+        }
+    }
+
+    private static class AlphaIcon implements Icon {
+        private final Icon delegate;
+        private final float alpha;
+
+        private AlphaIcon(Icon delegate, float alpha) {
+            this.delegate = delegate;
+            this.alpha = alpha;
+        }
+
+        @Override
+        public int getIconWidth() {
+            return delegate.getIconWidth();
+        }
+
+        @Override
+        public int getIconHeight() {
+            return delegate.getIconHeight();
+        }
+
+        @Override
+        public void paintIcon(java.awt.Component c, Graphics g, int x, int y) {
+            Graphics2D graphics2d = (Graphics2D) g.create();
+            graphics2d.setComposite(AlphaComposite.SrcOver.derive(alpha));
+            delegate.paintIcon(c, graphics2d, x, y);
+            graphics2d.dispose();
         }
     }
 }
