@@ -8,6 +8,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -16,6 +17,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +37,7 @@ public class RecipeEditorPanel extends JPanel {
     private final JLabel modeBadge;
     private final JLabel modeDescription;
     private final JButton saveButton;
+    private final JButton exportPdfButton;
     private final JButton resetButton;
     private final JButton addRelatedButton;
     private final JButton removeRelatedButton;
@@ -74,6 +77,7 @@ public class RecipeEditorPanel extends JPanel {
         modeBadge.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
         modeDescription = new JLabel();
         saveButton = new JButton("Save Recipe");
+        exportPdfButton = new JButton("Export PDF");
         resetButton = new JButton("Reset Form");
         addRelatedButton = new JButton("Add Related");
         removeRelatedButton = new JButton("Remove Selected");
@@ -202,8 +206,10 @@ public class RecipeEditorPanel extends JPanel {
 
         JPanel actions = new JPanel();
         saveButton.addActionListener(e -> onSave());
+        exportPdfButton.addActionListener(e -> onExportPdf());
         resetButton.addActionListener(e -> resetForm());
         actions.add(saveButton);
+        actions.add(exportPdfButton);
         actions.add(resetButton);
 
         panel.add(actions, BorderLayout.SOUTH);
@@ -218,6 +224,42 @@ public class RecipeEditorPanel extends JPanel {
             }
         } catch (IllegalStateException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Validation error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void onExportPdf() {
+        Recipe recipe;
+        try {
+            recipe = buildRecipeFromFields();
+        } catch (IllegalStateException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Validation error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Export Recipe PDF");
+        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF (*.pdf)", "pdf"));
+        int result = chooser.showSaveDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File file = chooser.getSelectedFile();
+        if (!file.getName().toLowerCase().endsWith(".pdf")) {
+            file = new File(file.getParentFile(), file.getName() + ".pdf");
+        }
+        List<String> relatedNames = recipe.getRelatedRecipeIds().stream()
+                .map(id -> recipeNameLookup.getOrDefault(id, "Unknown Recipe (" + id.toHexString() + ")"))
+                .toList();
+        try {
+            RecipePdfExporter.exportRecipe(file.toPath(), recipe, relatedNames);
+            JOptionPane.showMessageDialog(this,
+                    "Exported PDF to:\n" + file.getAbsolutePath(),
+                    "Export Complete",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Unable to export PDF: " + ex.getMessage(),
+                    "Export Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -400,7 +442,9 @@ public class RecipeEditorPanel extends JPanel {
         final boolean hasName = nameField.getText() != null && !nameField.getText().trim().isEmpty();
         final boolean hasIngredients = ingredientsModel.getSize() > 0;
         final boolean hasTags = tagsModel.getSize() > 0;
-        saveButton.setEnabled(hasName && hasIngredients && hasTags);
+        boolean ready = hasName && hasIngredients && hasTags;
+        saveButton.setEnabled(ready);
+        exportPdfButton.setEnabled(ready);
     }
 
     private void setCompactListRowHeight(JList<?> list) {
