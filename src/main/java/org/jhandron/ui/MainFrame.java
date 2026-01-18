@@ -8,6 +8,7 @@ import org.bson.types.ObjectId;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.BorderLayout;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Vector;
 
@@ -351,6 +353,7 @@ public class MainFrame extends JFrame {
         RecipeEditorPanel panel = new RecipeEditorPanel();
         panel.setRelatedSelector(this::openRelatedDialog);
         panel.setSaveListener(savedRecipe -> saveRecipe(panel, savedRecipe));
+        panel.setExportPdfListener(this::exportRecipePdf);
         panel.displayRecipe(recipe, allRecipes);
 
         String title = getTabTitle(recipe);
@@ -421,6 +424,54 @@ public class MainFrame extends JFrame {
                 panel.updateKnownRecipes(allRecipes);
             }
         }
+    }
+
+    private void exportRecipePdf(Recipe selected) {
+        if (selected == null || selected.getId() == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Save the recipe before exporting a PDF.",
+                    "Recipe Not Saved",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Export Recipe PDF");
+        chooser.setFileFilter(new FileNameExtensionFilter("PDF (*.pdf)", "pdf"));
+        int result = chooser.showSaveDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File file = chooser.getSelectedFile();
+        if (!file.getName().toLowerCase().endsWith(".pdf")) {
+            file = new File(file.getParentFile(), file.getName() + ".pdf");
+        }
+        Map<ObjectId, String> nameLookup = buildRecipeNameLookup();
+        List<String> relatedNames = selected.getRelatedRecipeIds().stream()
+                .map(id -> nameLookup.getOrDefault(id, "Unknown Recipe (" + id.toHexString() + ")"))
+                .toList();
+        Cursor previousCursor = getCursor();
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            RecipePdfExporter.exportRecipe(file.toPath(), selected, relatedNames);
+            JOptionPane.showMessageDialog(this,
+                    "Exported PDF to:\n" + file.getAbsolutePath(),
+                    "Export Complete",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            showError("Unable to export PDF: " + ex.getMessage());
+        } finally {
+            setCursor(previousCursor);
+        }
+    }
+
+    private Map<ObjectId, String> buildRecipeNameLookup() {
+        Map<ObjectId, String> lookup = new HashMap<>();
+        for (Recipe recipe : allRecipes) {
+            if (recipe != null && recipe.getId() != null) {
+                lookup.put(recipe.getId(), Objects.toString(recipe.getName(), recipe.getId().toHexString()));
+            }
+        }
+        return lookup;
     }
 
     private record TabInfo(JPanel container, JLabel titleLabel) {

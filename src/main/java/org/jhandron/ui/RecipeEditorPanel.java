@@ -35,6 +35,7 @@ public class RecipeEditorPanel extends JPanel {
     private final JLabel modeBadge;
     private final JLabel modeDescription;
     private final JButton saveButton;
+    private final JButton exportPdfButton;
     private final JButton resetButton;
     private final JButton addRelatedButton;
     private final JButton removeRelatedButton;
@@ -43,6 +44,7 @@ public class RecipeEditorPanel extends JPanel {
     private Recipe currentRecipe;
     private List<Recipe> knownRecipes = new ArrayList<>();
     private Consumer<Recipe> saveListener;
+    private Consumer<Recipe> exportPdfListener;
     private Runnable resetListener;
     private RelatedSelector relatedSelector;
     private Map<ObjectId, String> recipeNameLookup = new HashMap<>();
@@ -74,6 +76,7 @@ public class RecipeEditorPanel extends JPanel {
         modeBadge.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
         modeDescription = new JLabel();
         saveButton = new JButton("Save Recipe");
+        exportPdfButton = new JButton("Export PDF");
         resetButton = new JButton("Reset Form");
         addRelatedButton = new JButton("Add Related");
         removeRelatedButton = new JButton("Remove Selected");
@@ -202,8 +205,10 @@ public class RecipeEditorPanel extends JPanel {
 
         JPanel actions = new JPanel();
         saveButton.addActionListener(e -> onSave());
+        exportPdfButton.addActionListener(e -> onExportPdf());
         resetButton.addActionListener(e -> resetForm());
         actions.add(saveButton);
+        actions.add(exportPdfButton);
         actions.add(resetButton);
 
         panel.add(actions, BorderLayout.SOUTH);
@@ -215,6 +220,24 @@ public class RecipeEditorPanel extends JPanel {
             Recipe recipe = buildRecipeFromFields();
             if (saveListener != null) {
                 saveListener.accept(recipe);
+            }
+        } catch (IllegalStateException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Validation error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void onExportPdf() {
+        if (currentRecipe == null || currentRecipe.getId() == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Save the recipe before exporting a PDF.",
+                    "Recipe Not Saved",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        try {
+            Recipe recipe = buildRecipeFromFields();
+            if (exportPdfListener != null) {
+                exportPdfListener.accept(recipe);
             }
         } catch (IllegalStateException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Validation error", JOptionPane.WARNING_MESSAGE);
@@ -400,7 +423,9 @@ public class RecipeEditorPanel extends JPanel {
         final boolean hasName = nameField.getText() != null && !nameField.getText().trim().isEmpty();
         final boolean hasIngredients = ingredientsModel.getSize() > 0;
         final boolean hasTags = tagsModel.getSize() > 0;
-        saveButton.setEnabled(hasName && hasIngredients && hasTags);
+        boolean ready = hasName && hasIngredients && hasTags;
+        saveButton.setEnabled(ready);
+        exportPdfButton.setEnabled(ready && currentRecipe != null && currentRecipe.getId() != null);
     }
 
     private void setCompactListRowHeight(JList<?> list) {
@@ -412,6 +437,10 @@ public class RecipeEditorPanel extends JPanel {
 
     public void setSaveListener(Consumer<Recipe> saveListener) {
         this.saveListener = saveListener;
+    }
+
+    public void setExportPdfListener(Consumer<Recipe> exportPdfListener) {
+        this.exportPdfListener = exportPdfListener;
     }
 
     public void setResetListener(Runnable resetListener) {
