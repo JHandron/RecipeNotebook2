@@ -50,7 +50,7 @@ public class RecipeEditorPanel extends JPanel {
     private Map<ObjectId, String> recipeNameLookup = new HashMap<>();
 
     public RecipeEditorPanel() {
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         nameField = new JTextField();
         nameField.getDocument().addDocumentListener((SimpleDocumentListener) e -> updateSaveButtonState());
@@ -81,9 +81,32 @@ public class RecipeEditorPanel extends JPanel {
         addRelatedButton = new JButton("Add Related");
         removeRelatedButton = new JButton("Remove Selected");
 
-        add(buildTopPanel(), BorderLayout.NORTH);
-        add(buildListsPanel(), BorderLayout.CENTER);
-        add(buildBottomPanel(), BorderLayout.SOUTH);
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.weightx = 1.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.gridy = 0;
+        constraints.weighty = 0.0;
+        constraints.insets = new Insets(0, 0, 10, 0);
+        add(buildTopPanel(), constraints);
+
+        constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.weightx = 1.0;
+        constraints.weighty = 0.45;
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.insets = new Insets(0, 0, 10, 0);
+        add(buildListsPanel(), constraints);
+
+        constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 2;
+        constraints.weightx = 1.0;
+        constraints.weighty = 0.55;
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.insets = new Insets(0, 0, 0, 0);
+        add(buildBottomPanel(), constraints);
         updateListControls();
         updateRelatedActions();
         updateSaveButtonState();
