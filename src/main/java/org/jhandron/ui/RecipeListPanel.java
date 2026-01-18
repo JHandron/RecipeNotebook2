@@ -37,6 +37,7 @@ public class RecipeListPanel extends JPanel {
     private final JList<Recipe> recipeJList;
     private final JButton resetButton;
     private final JButton newRecipeButton;
+    private final JButton exportPdfButton;
     private Runnable filterChangeListener;
 
     public RecipeListPanel() {
@@ -79,9 +80,14 @@ public class RecipeListPanel extends JPanel {
 
         JPanel header = new JPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        exportPdfButton = new JButton("Export PDF");
+        exportPdfButton.setEnabled(false);
+
         header.add(searchPanel);
         header.add(Box.createVerticalStrut(8));
         header.add(newRecipePanel);
+        header.add(Box.createVerticalStrut(8));
+        header.add(buildExportPanel());
 
         add(header, BorderLayout.NORTH);
         add(buildListSection(), BorderLayout.CENTER);
@@ -151,6 +157,10 @@ public class RecipeListPanel extends JPanel {
         newRecipeButton.addActionListener(listener);
     }
 
+    public void addExportPdfListener(ActionListener listener) {
+        exportPdfButton.addActionListener(listener);
+    }
+
     public void addSelectionListener(java.awt.event.MouseListener listener) {
         recipeJList.addMouseListener(listener);
     }
@@ -187,6 +197,19 @@ public class RecipeListPanel extends JPanel {
         panel.add(header, BorderLayout.NORTH);
         panel.add(new JScrollPane(recipeJList), BorderLayout.CENTER);
         return panel;
+    }
+
+    private JPanel buildExportPanel() {
+        JPanel panel = new JPanel(new BorderLayout(6, 6));
+        panel.setBorder(BorderFactory.createTitledBorder("Export selected recipe"));
+        JLabel hint = new JLabel("Generate a PDF for the selected recipe.");
+        panel.add(hint, BorderLayout.CENTER);
+        panel.add(exportPdfButton, BorderLayout.EAST);
+        return panel;
+    }
+
+    public void setExportPdfEnabled(boolean enabled) {
+        exportPdfButton.setEnabled(enabled);
     }
 
     private void attachFilterListeners() {
