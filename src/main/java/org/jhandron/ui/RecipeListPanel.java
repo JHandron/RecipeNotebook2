@@ -25,6 +25,7 @@ import java.awt.Graphics2D;
 import java.awt.event.ActionListener;
 import java.util.List;
 import org.bson.types.ObjectId;
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 public class RecipeListPanel extends JPanel {
@@ -49,7 +50,7 @@ public class RecipeListPanel extends JPanel {
 
         filterField = new JTextField();
         filterField.putClientProperty("JTextField.placeholderText", "Filter");
-        filterField.putClientProperty("JTextField.showClearButton", true);
+        filterField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, Boolean.TRUE);
         filterField.putClientProperty("JTextField.leadingIcon",
                 new AlphaIcon(new FlatSVGIcon("icons/search.svg", 14, 14), 0.6f));
         nameRadio = new JRadioButton("Name");
@@ -64,6 +65,7 @@ public class RecipeListPanel extends JPanel {
         JPanel searchPanel = new JPanel();
         searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.Y_AXIS));
         searchPanel.setBorder(BorderFactory.createTitledBorder("Filter"));
+        searchPanel.setAlignmentX(LEFT_ALIGNMENT);
         searchPanel.add(buildFilterTypePanel());
         searchPanel.add(Box.createVerticalStrut(6));
         searchPanel.add(buildFilterFieldPanel());
@@ -74,6 +76,7 @@ public class RecipeListPanel extends JPanel {
 
         JPanel newRecipePanel = new JPanel(new BorderLayout(6, 6));
         newRecipePanel.setBorder(BorderFactory.createTitledBorder("Start a new recipe"));
+        newRecipePanel.setAlignmentX(LEFT_ALIGNMENT);
         newRecipeButton = new JButton("New Recipe");
         JLabel newRecipeHint = new JLabel("Add a new recipe to the notebook.");
         newRecipePanel.add(newRecipeHint, BorderLayout.CENTER);
