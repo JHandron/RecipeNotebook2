@@ -49,6 +49,7 @@ public class MainFrame extends JFrame {
         splitPane.setResizeWeight(0.35);
         splitPane.setDividerSize(10);
         splitPane.setContinuousLayout(true);
+        splitPane.setOneTouchExpandable(true);
         add(splitPane, BorderLayout.CENTER);
 
         attachListListeners();

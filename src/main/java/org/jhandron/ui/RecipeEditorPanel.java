@@ -77,9 +77,9 @@ public class RecipeEditorPanel extends JPanel {
         modeDescription = new JLabel();
         saveButton = new JButton("Save Recipe");
         exportPdfButton = new JButton("Export PDF");
-        resetButton = new JButton("Reset Form");
-        addRelatedButton = new JButton("Add Related");
-        removeRelatedButton = new JButton("Remove Selected");
+        resetButton = new JButton("Reset");
+        addRelatedButton = new JButton("Add...");
+        removeRelatedButton = new JButton("Remove");
 
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;

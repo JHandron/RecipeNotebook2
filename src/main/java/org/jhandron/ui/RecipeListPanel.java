@@ -1,6 +1,5 @@
 package org.jhandron.ui;
 
-import com.formdev.flatlaf.ui.FlatTextFieldUI;
 import org.jhandron.model.Recipe;
 
 import javax.swing.BorderFactory;
@@ -30,6 +29,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 public class RecipeListPanel extends JPanel {
+
     public enum FilterType {
         NAME,
         INGREDIENTS,
@@ -50,7 +50,7 @@ public class RecipeListPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         filterField = new JTextField();
-        filterField.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Filter Recipes");
+        filterField.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Filter recipes");
         filterField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, Boolean.TRUE);
         filterField.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
                 new AlphaIcon(new FlatSVGIcon("icons/search.svg", 14, 14), 0.6f));
@@ -85,9 +85,9 @@ public class RecipeListPanel extends JPanel {
 
         JPanel header = new JPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
-        header.add(searchPanel);
-        header.add(Box.createVerticalStrut(8));
         header.add(newRecipePanel);
+        header.add(Box.createVerticalStrut(8));
+        header.add(searchPanel);
 
         add(header, BorderLayout.NORTH);
         add(buildListSection(), BorderLayout.CENTER);
