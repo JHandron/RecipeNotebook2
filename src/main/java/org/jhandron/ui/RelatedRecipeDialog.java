@@ -3,7 +3,6 @@ package org.jhandron.ui;
 import org.jhandron.model.Recipe;
 import org.bson.types.ObjectId;
 import org.jdesktop.swingx.JXTreeTable;
-import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -24,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RelatedRecipeDialog extends JDialog {
-    private final RelatedRecipeTreeTableModel treeTableModel = new RelatedRecipeTreeTableModel();
+    private final RecipeTreeTableModel treeTableModel = new RecipeTreeTableModel();
     private final JXTreeTable recipeTreeTable = new JXTreeTable(treeTableModel);
     private List<Recipe> availableRecipes;
     private List<ObjectId> selectedIds = new ArrayList<>();
@@ -95,7 +94,8 @@ public class RelatedRecipeDialog extends JDialog {
         for (int row = 0; row < recipeTreeTable.getRowCount(); row++) {
             TreePath path = recipeTreeTable.getPathForRow(row);
             Object node = path == null ? null : path.getLastPathComponent();
-            if (node instanceof RecipeNode recipeNode && ids.contains(recipeNode.recipe().getId())) {
+            Recipe recipe = treeTableModel.recipeForNode(node);
+            if (recipe != null && ids.contains(recipe.getId())) {
                 recipeTreeTable.addRowSelectionInterval(row, row);
             }
         }
@@ -110,8 +110,9 @@ public class RelatedRecipeDialog extends JDialog {
                 continue;
             }
             Object node = path.getLastPathComponent();
-            if (node instanceof RecipeNode recipeNode) {
-                selected.add(recipeNode.recipe());
+            Recipe recipe = treeTableModel.recipeForNode(node);
+            if (recipe != null) {
+                selected.add(recipe);
             }
         }
         return selected;
@@ -133,76 +134,4 @@ public class RelatedRecipeDialog extends JDialog {
         return selectedIds;
     }
 
-    private static class RelatedRecipeTreeTableModel extends AbstractTreeTableModel {
-        private final RootNode rootNode = new RootNode();
-
-        private RelatedRecipeTreeTableModel() {
-            super(new RootNode());
-            this.root = rootNode;
-        }
-
-        private void setRecipes(List<Recipe> recipes) {
-            rootNode.children = recipes.stream().map(RecipeNode::new).collect(Collectors.toList());
-            modelSupport.fireNewRoot();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 1;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            return "Recipe";
-        }
-
-        @Override
-        public Object getValueAt(Object node, int column) {
-            if (node instanceof RecipeNode recipeNode) {
-                return recipeNode.recipe();
-            }
-            return "Recipes";
-        }
-
-        @Override
-        public Object getChild(Object parent, int index) {
-            if (parent instanceof RootNode root) {
-                return root.children.get(index);
-            }
-            return null;
-        }
-
-        @Override
-        public int getChildCount(Object parent) {
-            if (parent instanceof RootNode root) {
-                return root.children.size();
-            }
-            return 0;
-        }
-
-        @Override
-        public int getIndexOfChild(Object parent, Object child) {
-            if (parent instanceof RootNode root) {
-                return root.children.indexOf(child);
-            }
-            return -1;
-        }
-
-        @Override
-        public boolean isLeaf(Object node) {
-            return node instanceof RecipeNode;
-        }
-    }
-
-    private static class RootNode {
-        private List<RecipeNode> children = new ArrayList<>();
-    }
-
-    private record RecipeNode(Recipe recipe) {
-        @Override
-        public String toString() {
-            String name = recipe.getName();
-            return name == null ? "(untitled recipe)" : name;
-        }
-    }
 }

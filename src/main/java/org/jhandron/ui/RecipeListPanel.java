@@ -3,7 +3,6 @@ package org.jhandron.ui;
 import org.jhandron.model.Recipe;
 import org.bson.types.ObjectId;
 import org.jdesktop.swingx.JXTreeTable;
-import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -27,7 +26,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
 import java.util.List;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
@@ -138,10 +136,7 @@ public class RecipeListPanel extends JPanel {
             return null;
         }
         Object node = path.getLastPathComponent();
-        if (node instanceof RecipeNode recipeNode) {
-            return recipeNode.recipe();
-        }
-        return null;
+        return treeTableModel.recipeForNode(node);
     }
 
     public void clearSelection() {
@@ -194,7 +189,8 @@ public class RecipeListPanel extends JPanel {
                 continue;
             }
             Object node = path.getLastPathComponent();
-            if (node instanceof RecipeNode recipeNode && id.equals(recipeNode.recipe().getId())) {
+            Recipe recipe = treeTableModel.recipeForNode(node);
+            if (recipe != null && id.equals(recipe.getId())) {
                 recipeTreeTable.setRowSelectionInterval(row, row);
                 recipeTreeTable.scrollRowToVisible(row);
                 break;
@@ -227,79 +223,6 @@ public class RecipeListPanel extends JPanel {
     private void notifyFilterChange() {
         if (filterChangeListener != null) {
             filterChangeListener.run();
-        }
-    }
-
-    private static class RecipeTreeTableModel extends AbstractTreeTableModel {
-        private final RootNode rootNode = new RootNode();
-
-        private RecipeTreeTableModel() {
-            super(new RootNode());
-            this.root = rootNode;
-        }
-
-        private void setRecipes(List<Recipe> recipes) {
-            rootNode.children = recipes.stream().map(RecipeNode::new).toList();
-            modelSupport.fireNewRoot();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 1;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            return "Recipe";
-        }
-
-        @Override
-        public Object getValueAt(Object node, int column) {
-            if (node instanceof RecipeNode recipeNode) {
-                return recipeNode.recipe();
-            }
-            return "Recipes";
-        }
-
-        @Override
-        public Object getChild(Object parent, int index) {
-            if (parent instanceof RootNode root) {
-                return root.children.get(index);
-            }
-            return null;
-        }
-
-        @Override
-        public int getChildCount(Object parent) {
-            if (parent instanceof RootNode root) {
-                return root.children.size();
-            }
-            return 0;
-        }
-
-        @Override
-        public int getIndexOfChild(Object parent, Object child) {
-            if (parent instanceof RootNode root) {
-                return root.children.indexOf(child);
-            }
-            return -1;
-        }
-
-        @Override
-        public boolean isLeaf(Object node) {
-            return node instanceof RecipeNode;
-        }
-    }
-
-    private static class RootNode {
-        private List<RecipeNode> children = new ArrayList<>();
-    }
-
-    private record RecipeNode(Recipe recipe) {
-        @Override
-        public String toString() {
-            String name = recipe.getName();
-            return name == null ? "(untitled recipe)" : name;
         }
     }
 
