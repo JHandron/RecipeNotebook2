@@ -1,21 +1,23 @@
 package org.jhandron.ui;
 
 import org.jhandron.model.Recipe;
+import org.bson.types.ObjectId;
+import org.jdesktop.swingx.JXTreeTable;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.tree.TreePath;
 import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -23,10 +25,11 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseListener;
 import java.util.List;
-import org.bson.types.ObjectId;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import org.jhandron.model.RecipeTreeTableModel;
 
 public class RecipeListPanel extends JPanel {
 
@@ -40,8 +43,8 @@ public class RecipeListPanel extends JPanel {
     private final JRadioButton nameRadio;
     private final JRadioButton ingredientsRadio;
     private final JRadioButton tagsRadio;
-    private final DefaultListModel<Recipe> listModel;
-    private final JList<Recipe> recipeJList;
+    private final RecipeTreeTableModel treeTableModel;
+    private final JXTreeTable recipeTreeTable;
     private final JButton newRecipeButton;
     private Runnable filterChangeListener;
 
@@ -71,9 +74,12 @@ public class RecipeListPanel extends JPanel {
         searchPanel.add(Box.createVerticalStrut(6));
         searchPanel.add(buildFilterFieldPanel());
 
-        listModel = new DefaultListModel<>();
-        recipeJList = new JList<>(listModel);
-        recipeJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        treeTableModel = new RecipeTreeTableModel();
+        recipeTreeTable = new JXTreeTable(treeTableModel);
+        recipeTreeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        recipeTreeTable.setRootVisible(false);
+        recipeTreeTable.setShowsRootHandles(true);
+        recipeTreeTable.setColumnControlVisible(false);
 
         JPanel newRecipePanel = new JPanel(new BorderLayout(6, 6));
         newRecipePanel.setBorder(BorderFactory.createTitledBorder("Start a new recipe"));
@@ -117,18 +123,25 @@ public class RecipeListPanel extends JPanel {
     }
 
     public void updateList(List<Recipe> recipes) {
-        listModel.clear();
-        for (Recipe recipe : recipes) {
-            listModel.addElement(recipe);
-        }
+        treeTableModel.setRecipes(recipes);
+        recipeTreeTable.expandAll();
     }
 
     public Recipe getSelectedRecipe() {
-        return recipeJList.getSelectedValue();
+        int selectedRow = recipeTreeTable.getSelectedRow();
+        if (selectedRow < 0) {
+            return null;
+        }
+        TreePath path = recipeTreeTable.getPathForRow(selectedRow);
+        if (path == null) {
+            return null;
+        }
+        Object node = path.getLastPathComponent();
+        return treeTableModel.recipeForNode(node);
     }
 
     public void clearSelection() {
-        recipeJList.clearSelection();
+        recipeTreeTable.clearSelection();
     }
 
     public String getFilterText() {
@@ -153,12 +166,12 @@ public class RecipeListPanel extends JPanel {
         newRecipeButton.addActionListener(listener);
     }
 
-    public void addSelectionListener(java.awt.event.MouseListener listener) {
-        recipeJList.addMouseListener(listener);
+    public void addSelectionListener(MouseListener listener) {
+        recipeTreeTable.addMouseListener(listener);
     }
 
-    public void addSelectionChangeListener(javax.swing.event.ListSelectionListener listener) {
-        recipeJList.addListSelectionListener(listener);
+    public void addSelectionChangeListener(ListSelectionListener listener) {
+        recipeTreeTable.getSelectionModel().addListSelectionListener(listener);
     }
 
     public void resetFilters() {
@@ -171,11 +184,16 @@ public class RecipeListPanel extends JPanel {
         if (id == null) {
             return;
         }
-        for (int i = 0; i < listModel.size(); i++) {
-            Recipe recipe = listModel.get(i);
-            if (id.equals(recipe.getId())) {
-                recipeJList.setSelectedIndex(i);
-                recipeJList.ensureIndexIsVisible(i);
+        for (int row = 0; row < recipeTreeTable.getRowCount(); row++) {
+            TreePath path = recipeTreeTable.getPathForRow(row);
+            if (path == null) {
+                continue;
+            }
+            Object node = path.getLastPathComponent();
+            Recipe recipe = treeTableModel.recipeForNode(node);
+            if (recipe != null && id.equals(recipe.getId())) {
+                recipeTreeTable.setRowSelectionInterval(row, row);
+                recipeTreeTable.scrollRowToVisible(row);
                 break;
             }
         }
@@ -183,10 +201,7 @@ public class RecipeListPanel extends JPanel {
 
     private JPanel buildListSection() {
         JPanel panel = new JPanel(new BorderLayout(6, 6));
-        JLabel header = new JLabel("Existing recipes (select to view or edit)");
-        header.setBorder(BorderFactory.createEmptyBorder(4, 2, 4, 2));
-        panel.add(header, BorderLayout.NORTH);
-        panel.add(new JScrollPane(recipeJList), BorderLayout.CENTER);
+        panel.add(new JScrollPane(recipeTreeTable), BorderLayout.CENTER);
         return panel;
     }
 
