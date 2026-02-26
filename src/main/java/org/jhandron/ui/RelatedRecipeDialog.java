@@ -3,6 +3,7 @@ package org.jhandron.ui;
 import org.jhandron.model.Recipe;
 import org.bson.types.ObjectId;
 import org.jdesktop.swingx.JXTreeTable;
+import org.jhandron.model.RecipeTreeTableModel;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -133,5 +134,4 @@ public class RelatedRecipeDialog extends JDialog {
     public List<ObjectId> getSelectedIds() {
         return selectedIds;
     }
-
 }

@@ -1,6 +1,5 @@
-package org.jhandron.ui;
+package org.jhandron.model;
 
-import org.jhandron.model.Recipe;
 import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 
 import java.util.ArrayList;

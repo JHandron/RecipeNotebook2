@@ -29,6 +29,7 @@ import java.awt.event.MouseListener;
 import java.util.List;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import org.jhandron.model.RecipeTreeTableModel;
 
 public class RecipeListPanel extends JPanel {
 
@@ -200,9 +201,6 @@ public class RecipeListPanel extends JPanel {
 
     private JPanel buildListSection() {
         JPanel panel = new JPanel(new BorderLayout(6, 6));
-        JLabel header = new JLabel("Existing recipes (select to view or edit)");
-        header.setBorder(BorderFactory.createEmptyBorder(4, 2, 4, 2));
-        panel.add(header, BorderLayout.NORTH);
         panel.add(new JScrollPane(recipeTreeTable), BorderLayout.CENTER);
         return panel;
     }

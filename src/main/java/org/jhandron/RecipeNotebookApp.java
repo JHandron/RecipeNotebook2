@@ -34,7 +34,7 @@ public final class RecipeNotebookApp {
             //Note: Invoke this method before setting the look and feel.
             FlatLaf.registerCustomDefaultsSource("theme");
 //            UIManager.put("TabbedPane.showTabSeparators", true);
-//            UIManager.put("SplitPane.oneTouchButtonOffset", 5 );
+//            UIManager.put("SplitPane.centerOneTouchButtons", false);
             FlatIntelliJLaf.setup();
             FlatLaf.setUseNativeWindowDecorations(true);
 //            UIManager.put("TabbedPane.selectedBackground", Color.GRAY);
